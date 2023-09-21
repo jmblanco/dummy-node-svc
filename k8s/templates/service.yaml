@@ -1,0 +1,24 @@
+{{- range $name, $project := .Values.instances -}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $project.name | trunc 63 }}
+  labels:
+    app: {{ $project.app | trunc 63 }}
+    component: {{ $project.name | trunc 63 }}
+  annotations:
+{{- with $project.service.annotations }}
+{{ toYaml . | indent 4 }}
+{{- end }}
+spec:
+  type: {{ $project.service.type }}
+  selector:
+    app: {{ $project.app | trunc 63 }}
+    component: {{ $project.name | trunc 63 }}
+  ports:
+  {{- range $key, $value := $project.service.ports }}
+    - name: {{ $key }}
+{{ toYaml $value | indent 6 }}
+  {{- end }}
+{{ end }}

@@ -1,0 +1,64 @@
+image:
+  tag: 1.0.0
+  repository: localhost:5000/dummy-node-svc
+
+instances:
+  rest:
+    name: dummy-node-svc
+    app: dummy-node-svc
+    deployment:
+      replicaCount: 1
+      strategy:
+        rollingUpdate:
+          maxSurge: 1
+          maxUnavailable: 0
+        type: RollingUpdate
+    container:
+      pullPolicy: IfNotPresent
+      command:
+        default: npm run start
+        debug: npm run debug
+      resources:
+        limits:
+          cpu: 100m
+          memory: 200Mi
+        requests:
+          cpu: 30m
+          memory: 80Mi
+      extraEnv: []
+      externalEnv:
+        - type: configMapRef
+          name: dummy-node-svc.service-config
+      ports:
+        http-server:
+          containerPort: 3000
+          protocol: TCP
+        debug:
+          containerPort: 9229
+          protocol: TCP
+      livenessProbe:
+        tcpSocket:
+          port: 3000
+        initialDelaySeconds: 30
+        periodSeconds: 30
+      readinessProbe:
+        tcpSocket:
+          port: 3000
+        initialDelaySeconds: 20
+        periodSeconds: 20
+    service:
+      type: ClusterIP
+      ports:
+        http-server:
+          port: 3000
+          targetPort: 3000
+          protocol: TCP
+        debug:
+          port: 9229
+          targetPort: 9229
+          protocol: TCP
+
+configMaps:
+  - name: dummy-node-svc.service-config
+    data:
+      MONGODB_NAME: core_oneid_db

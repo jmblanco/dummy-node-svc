@@ -61,4 +61,4 @@ instances:
 configMaps:
   - name: dummy-node-svc.service-config
     data:
-      MONGODB_NAME: core_oneid_db
+      SOME_DUMMY_VAR: 'some dummy value'

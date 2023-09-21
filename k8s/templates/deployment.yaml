@@ -1,0 +1,72 @@
+{{- range $name, $project := .Values.instances -}}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $project.name | trunc 63 }}
+  labels:
+    app: {{ $project.app | trunc 63 }}
+    component: {{ $project.name | trunc 63 }}
+spec:
+  replicas: {{ $project.deployment.replicaCount | default 1 }}
+  selector:
+    matchLabels:
+      app: {{ $project.app | trunc 63 }}
+      component: {{ $project.name | trunc 63 }}
+  {{- if $project.deployment.strategy }}
+  strategy: {{ toYaml $project.deployment.strategy | nindent 4 }}
+  {{- end }}
+  template:
+    metadata:
+      {{- with $project.deployment.podAnnotations }}
+      annotations: {{ toYaml $project.deployment.podAnnotations | nindent 8 }}
+      {{- end }}
+      labels:
+        app: {{ $project.app | trunc 63 }}
+        component: {{ $project.name | trunc 63 }}
+    spec:
+      containers:
+        - name: {{ $project.name | trunc 63 }}
+          image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag }}"
+          command:
+            - sh
+            - -c
+            - 'if [ "$DEBUG_NODEJS" = true ]; then {{ $project.container.command.debug }}; else {{ $project.container.command.default }}; fi'
+          imagePullPolicy: {{ $project.container.pullPolicy }}
+          {{- if $project.container.extraEnv }}
+          env:
+          {{- range $key, $value := $project.container.extraEnv }}
+          - name: {{ $key }}
+            value: {{ $value }}
+          {{- end }}
+          {{- end }}
+          {{- if $project.container.externalEnv }}
+          envFrom:
+          {{- range $project.container.externalEnv }}
+          - {{ .type }}:
+              name: {{ .name }}
+          {{- end }}
+          {{- end }}
+          ports:
+          {{- range $key, $value := $project.container.ports }}
+            - name: {{ $key }} {{ toYaml $value | nindent 14 }}
+          {{- end }}
+          resources: {{ toYaml $project.container.resources | nindent 12 }}
+          livenessProbe: {{ toYaml $project.container.livenessProbe | nindent 12 }}
+          readinessProbe: {{ toYaml $project.container.readinessProbe | nindent 12 }}
+          {{- if $project.container.volumes }}
+          volumeMounts:
+          {{- range $project.container.volumes }}
+            - name: {{ .name }}
+              mountPath: {{ .path }}
+              readOnly: {{ .readOnly | default true }}
+          {{- end }}
+          {{- end }}
+      {{- if $project.container.volumes }}
+      volumes:
+      {{- range $project.container.volumes }}
+        - name: {{ .name }}
+        {{- toYaml .type | nindent 10 }}
+      {{- end }}
+      {{- end }}
+{{ end }}

@@ -2,7 +2,8 @@ const fastify = require('fastify')();
 const log = require('pino')();
 
 const config = {
-    port: 3000
+    port: 3000,
+    host: '0.0.0.0'
 };
 
 fastify.get('/', async (request, reply) => {

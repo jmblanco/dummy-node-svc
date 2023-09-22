@@ -1,0 +1,12 @@
+project: default
+source:
+  repoURL: 'https://github.com/jmblanco/dummy-node-svc.git'
+  path: ./k8s
+  targetRevision: main
+  helm:
+    valueFiles:
+      - values.yaml
+    releaseName: dummy-node-svc
+destination:
+  server: 'https://kubernetes.default.svc'
+  namespace: dummy
